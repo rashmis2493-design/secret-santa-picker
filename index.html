@@ -1,0 +1,2714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Secret Santa Picker</title>
+
+  <style>
+    :root {
+      --red: #b71c1c;
+      --red-light: #dc2727;
+      --green: #0b5136;
+      --dark-green: #032f22;
+      --gold: #ffd166;
+      --white: #ffffff;
+      --ink: #17352a;
+      --muted: #718078;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--white);
+      font-family: "Segoe UI", Arial, sans-serif;
+
+      background:
+        radial-gradient(
+          circle at 10% 10%,
+          rgba(255,255,255,.08),
+          transparent 25%
+        ),
+        linear-gradient(
+          135deg,
+          #135c43 0%,
+          #07472f 45%,
+          var(--dark-green) 100%
+        );
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+    }
+
+
+    /* =====================================================
+       HEADER
+    ===================================================== */
+
+    header {
+      width: 100%;
+      padding: 25px 20px 5px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 44px;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -.7px;
+    }
+
+    header h1 span {
+      color: var(--gold);
+    }
+
+    header p {
+      margin: 9px 0 0;
+      color: #e3f0ea;
+      font-size: 16px;
+    }
+
+
+    /* =====================================================
+       TOP CONTROLS
+    ===================================================== */
+
+    .top-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+
+      gap: 9px;
+
+      padding: 10px 20px 23px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+
+      gap: 8px;
+
+      min-height: 36px;
+
+      padding: 7px 15px;
+
+      background: rgba(255,255,255,.11);
+
+      border:
+        1px solid rgba(255,255,255,.22);
+
+      border-radius: 999px;
+
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+
+      border-radius: 50%;
+
+      background: #f6c945;
+    }
+
+    .status.online .dot {
+      background: #55e98a;
+      box-shadow: 0 0 8px #55e98a;
+    }
+
+    .status.offline .dot {
+      background: #ff7272;
+    }
+
+    .admin-login-button,
+    .admin-logout-button {
+      min-height: 36px;
+
+      padding: 7px 15px;
+
+      color: #ffffff;
+
+      background: rgba(255,255,255,.11);
+
+      border:
+        1px solid rgba(255,255,255,.22);
+
+      border-radius: 999px;
+
+      font-size: 13px;
+      font-weight: 650;
+
+      cursor: pointer;
+    }
+
+    .admin-login-button:hover,
+    .admin-logout-button:hover {
+      background: rgba(255,255,255,.18);
+    }
+
+    .admin-indicator {
+      display: none;
+
+      align-items: center;
+
+      min-height: 36px;
+
+      padding: 7px 15px;
+
+      color: #083c28;
+      background: var(--gold);
+
+      border-radius: 999px;
+
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    body.admin-mode .admin-indicator {
+      display: inline-flex;
+    }
+
+    body.admin-mode .admin-login-button {
+      display: none;
+    }
+
+    .admin-logout-button {
+      display: none;
+    }
+
+    body.admin-mode .admin-logout-button {
+      display: inline-block;
+    }
+
+
+    /* =====================================================
+       MAIN LAYOUT
+    ===================================================== */
+
+    .layout {
+      display: grid;
+
+      grid-template-columns:
+        870px 300px;
+
+      column-gap: 28px;
+
+      align-items: start;
+      justify-content: center;
+
+      width: 100%;
+      max-width: 1250px;
+
+      margin: 0 auto;
+
+      padding: 0 25px 35px;
+    }
+
+    .game {
+      width: 870px;
+    }
+
+
+    /* =====================================================
+       COUNTERS
+    ===================================================== */
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      gap: 12px;
+
+      height: 44px;
+
+      margin-bottom: 15px;
+    }
+
+    .stat {
+      min-width: 155px;
+
+      padding: 9px 18px;
+
+      text-align: center;
+
+      background: rgba(255,255,255,.11);
+
+      border:
+        1px solid rgba(255,255,255,.20);
+
+      border-radius: 999px;
+
+      font-size: 14px;
+    }
+
+    .stat strong {
+      color: var(--gold);
+    }
+
+
+    /* =====================================================
+       NUMBER GRID
+    ===================================================== */
+
+    .grid {
+      display: grid;
+
+      grid-template-columns:
+        repeat(8, 100px);
+
+      grid-template-rows:
+        repeat(4, 82px);
+
+      gap: 10px;
+
+      width: 870px;
+    }
+
+    .number {
+      width: 100px;
+      height: 82px;
+
+      padding: 0;
+
+      color: #ffffff;
+
+      background:
+        linear-gradient(
+          145deg,
+          var(--red-light),
+          #ac1212
+        );
+
+      border:
+        2px solid rgba(255,255,255,.16);
+
+      border-radius: 13px;
+
+      font-size: 23px;
+      font-weight: 800;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 6px 15px rgba(0,0,0,.22);
+
+      transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        opacity .18s ease;
+    }
+
+    .number::before {
+      display: block;
+
+      margin-bottom: 2px;
+
+      font-size: 18px;
+
+      content: "🎁";
+    }
+
+    .number:hover:not(:disabled) {
+      transform:
+        translateY(-4px)
+        scale(1.025);
+
+      box-shadow:
+        0 10px 20px rgba(0,0,0,.30);
+    }
+
+    .number:active:not(:disabled) {
+      transform:
+        translateY(-1px)
+        scale(.99);
+    }
+
+    .number:disabled {
+      color: rgba(255,255,255,.78);
+
+      background:
+        linear-gradient(
+          145deg,
+          #60776e,
+          #34473f
+        );
+
+      opacity: .74;
+
+      box-shadow:
+        0 3px 7px rgba(0,0,0,.12);
+    }
+
+    .number:disabled::before {
+      content: "🔒";
+    }
+
+
+    /* =====================================================
+       PARTICIPANT PANEL
+    ===================================================== */
+
+    .picked-panel {
+      display: flex;
+      flex-direction: column;
+
+      width: 300px;
+      min-width: 300px;
+      height: 353px;
+
+      margin-top: 59px;
+
+      padding: 18px;
+
+      color: var(--ink);
+
+      background: rgba(255,255,255,.98);
+
+      border:
+        1px solid rgba(255,255,255,.7);
+
+      border-radius: 17px;
+
+      overflow: hidden;
+
+      box-shadow:
+        0 12px 35px rgba(0,0,0,.20);
+    }
+
+    .picked-panel h2 {
+      margin: 0;
+
+      color: var(--red);
+
+      font-size: 21px;
+      font-weight: 800;
+
+      text-align: center;
+    }
+
+    .picked-panel small {
+      display: block;
+
+      margin: 5px 0 14px;
+
+      color: var(--muted);
+
+      font-size: 12px;
+
+      text-align: center;
+    }
+
+    #pickedList {
+      flex: 1;
+
+      min-height: 0;
+
+      overflow-y: auto;
+
+      padding-right: 4px;
+    }
+
+    #pickedList::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    #pickedList::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #pickedList::-webkit-scrollbar-thumb {
+      background: #c1cec7;
+      border-radius: 10px;
+    }
+
+    .empty {
+      padding: 70px 10px 20px;
+
+      color: #8a9690;
+
+      font-size: 13px;
+
+      text-align: center;
+    }
+
+
+    /* =====================================================
+       PARTICIPANT ROW
+    ===================================================== */
+
+    .picked-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 10px;
+
+      min-height: 47px;
+
+      margin-bottom: 7px;
+
+      padding:
+        6px 8px 6px 12px;
+
+      background: #f3f7f5;
+
+      border:
+        1px solid #dce8e1;
+
+      border-radius: 11px;
+    }
+
+    .person {
+      flex: 1;
+
+      min-width: 0;
+
+      color: var(--ink);
+
+      font-size: 14px;
+      font-weight: 700;
+
+      overflow: hidden;
+
+      text-overflow: ellipsis;
+
+      white-space: nowrap;
+    }
+
+    .participant-actions {
+      display: flex;
+      align-items: center;
+
+      gap: 6px;
+    }
+
+    .badge {
+      display: grid;
+      place-items: center;
+
+      flex: 0 0 36px;
+
+      width: 36px;
+      height: 36px;
+
+      color: #ffffff;
+
+      background:
+        linear-gradient(
+          145deg,
+          #d62222,
+          #ad1010
+        );
+
+      border-radius: 50%;
+
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+
+    /* =====================================================
+       ADMIN REMOVE
+    ===================================================== */
+
+    .remove-person {
+      display: none;
+      place-items: center;
+
+      width: 28px;
+      height: 28px;
+
+      padding: 0;
+
+      color: #a31212;
+      background: #ffe7e7;
+
+      border: 0;
+      border-radius: 50%;
+
+      font-size: 12px;
+      font-weight: 800;
+
+      cursor: pointer;
+
+      transition:
+        background .15s ease,
+        color .15s ease,
+        transform .15s ease;
+    }
+
+    body.admin-mode .remove-person {
+      display: grid;
+    }
+
+    .remove-person:hover {
+      color: #ffffff;
+      background: #c51b1b;
+
+      transform: scale(1.06);
+    }
+
+
+    /* =====================================================
+       ADMIN PANEL
+    ===================================================== */
+
+    .admin-actions {
+      display: none;
+
+      padding-top: 9px;
+
+      border-top:
+        1px solid #e2ebe6;
+    }
+
+    body.admin-mode .admin-actions {
+      display: block;
+    }
+
+    .reset-game {
+      width: 100%;
+
+      padding: 9px 12px;
+
+      color: #a31212;
+      background: #fff0f0;
+
+      border:
+        1px solid #f1c6c6;
+
+      border-radius: 9px;
+
+      font-size: 12px;
+      font-weight: 750;
+
+      cursor: pointer;
+
+      transition:
+        background .15s ease,
+        color .15s ease;
+    }
+
+    .reset-game:hover {
+      color: #ffffff;
+      background: var(--red);
+
+      border-color: var(--red);
+    }
+
+    .reset-game:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+
+    /* =====================================================
+       OVERLAY
+    ===================================================== */
+
+    .overlay {
+      position: fixed;
+
+      z-index: 1000;
+
+      inset: 0;
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+
+      padding: 20px;
+
+      background: rgba(0,0,0,.76);
+    }
+
+    .overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(420px,100%);
+
+      padding: 28px;
+
+      color: #242424;
+      background: #ffffff;
+
+      border-radius: 20px;
+
+      text-align: center;
+
+      box-shadow:
+        0 25px 60px rgba(0,0,0,.42);
+    }
+
+    .icon {
+      font-size: 52px;
+    }
+
+    .modal h2 {
+      margin: 5px 0 7px;
+
+      color: var(--red);
+
+      font-size: 24px;
+    }
+
+    .modal p {
+      font-size: 14px;
+    }
+
+    .selected {
+      color: #0c6b43;
+
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+
+    /* =====================================================
+       INPUTS
+    ===================================================== */
+
+    .label {
+      display: block;
+
+      margin: 15px 0 6px;
+
+      text-align: left;
+
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .input {
+      width: 100%;
+
+      padding: 12px 14px;
+
+      border:
+        2px solid #dddddd;
+
+      border-radius: 10px;
+
+      font-size: 15px;
+
+      outline: none;
+    }
+
+    .input:focus {
+      border-color: #148653;
+    }
+
+    .error {
+      min-height: 21px;
+
+      margin-top: 5px;
+
+      color: #c62828;
+
+      font-size: 12px;
+
+      text-align: left;
+    }
+
+
+    /* =====================================================
+       BUTTONS
+    ===================================================== */
+
+    .actions {
+      display: flex;
+
+      gap: 9px;
+
+      margin-top: 9px;
+    }
+
+    .actions button,
+    .continue {
+      min-height: 42px;
+
+      border: 0;
+      border-radius: 9px;
+
+      font-size: 13px;
+      font-weight: 700;
+
+      cursor: pointer;
+    }
+
+    .actions button {
+      flex: 1;
+    }
+
+    .cancel {
+      color: #555555;
+      background: #ededed;
+    }
+
+    .confirm,
+    .continue {
+      color: #ffffff;
+      background: #148653;
+    }
+
+    .actions button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+
+    /* =====================================================
+       SUCCESS
+    ===================================================== */
+
+    .success-num {
+      display: grid;
+      place-items: center;
+
+      width: 90px;
+      height: 90px;
+
+      margin: 15px auto;
+
+      color: #ffffff;
+      background: var(--red);
+
+      border:
+        4px solid var(--gold);
+
+      border-radius: 50%;
+
+      font-size: 38px;
+      font-weight: 900;
+    }
+
+    .continue {
+      width: 100%;
+
+      padding: 11px;
+    }
+
+
+    /* =====================================================
+       TOAST
+    ===================================================== */
+
+    .toast {
+      position: fixed;
+
+      z-index: 2000;
+
+      top: 15px;
+      right: 15px;
+
+      display: none;
+
+      width:
+        min(370px,calc(100% - 30px));
+
+      padding: 12px 14px;
+
+      color: #222222;
+      background: #ffffff;
+
+      border-left:
+        5px solid #148653;
+
+      border-radius: 8px;
+
+      font-size: 13px;
+
+      box-shadow:
+        0 8px 25px rgba(0,0,0,.3);
+    }
+
+    .toast.error-toast {
+      border-left-color: #c62828;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 1250px) {
+      .layout {
+        grid-template-columns:
+          750px 270px;
+
+        column-gap: 22px;
+
+        max-width: 1100px;
+      }
+
+      .game {
+        width: 750px;
+      }
+
+      .grid {
+        width: 750px;
+
+        grid-template-columns:
+          repeat(8,85px);
+
+        gap: 10px;
+      }
+
+      .number {
+        width: 85px;
+      }
+
+      .picked-panel {
+        width: 270px;
+        min-width: 270px;
+      }
+    }
+
+    @media (max-width: 1050px) {
+      header h1 {
+        font-size: 38px;
+      }
+
+      .layout {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        max-width: 800px;
+      }
+
+      .game {
+        width: 100%;
+      }
+
+      .grid {
+        width: 100%;
+
+        grid-template-columns:
+          repeat(4,1fr);
+
+        grid-template-rows: auto;
+      }
+
+      .number {
+        width: 100%;
+      }
+
+      .picked-panel {
+        width: 100%;
+        min-width: 0;
+
+        height: auto;
+        min-height: 190px;
+
+        margin-top: 8px;
+      }
+
+      #pickedList {
+        max-height: 220px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding-top: 18px;
+      }
+
+      header h1 {
+        font-size: 29px;
+      }
+
+      header p {
+        font-size: 13px;
+      }
+
+      .top-controls {
+        padding-bottom: 16px;
+      }
+
+      .layout {
+        padding: 5px 12px 25px;
+      }
+
+      .stats {
+        height: auto;
+        gap: 5px;
+      }
+
+      .stat {
+        flex: 1;
+
+        min-width: 0;
+
+        padding: 7px 5px;
+
+        font-size: 11px;
+      }
+
+      .grid {
+        gap: 7px;
+      }
+
+      .number {
+        height: 68px;
+
+        font-size: 19px;
+      }
+
+      .number::before {
+        font-size: 14px;
+      }
+
+      .actions {
+        flex-direction: column-reverse;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div
+    id="toast"
+    class="toast"
+    aria-live="assertive"
+  ></div>
+
+
+  <!-- HEADER -->
+
+  <header>
+    <h1>
+      🎅 Secret <span>Santa</span> Picker 🎄
+    </h1>
+
+    <p>
+      Choose your number!
+    </p>
+  </header>
+
+
+  <!-- CONNECTION AND ADMIN -->
+
+  <div class="top-controls">
+
+    <div
+      id="status"
+      class="status"
+    >
+      <span class="dot"></span>
+
+      <span id="statusText">
+        Connecting...
+      </span>
+    </div>
+
+
+    <button
+      id="adminLoginButton"
+      class="admin-login-button"
+      type="button"
+    >
+      🔐 Admin Login
+    </button>
+
+
+    <span class="admin-indicator">
+      ✓ Admin Mode
+    </span>
+
+
+    <button
+      id="adminLogoutButton"
+      class="admin-logout-button"
+      type="button"
+    >
+      Logout
+    </button>
+
+  </div>
+
+
+  <!-- MAIN -->
+
+  <main class="layout">
+
+    <section class="game">
+
+      <div class="stats">
+
+        <div class="stat">
+          🎄 Total:
+          <strong>32</strong>
+        </div>
+
+        <div class="stat">
+          🎁 Available:
+          <strong id="available">32</strong>
+        </div>
+
+        <div class="stat">
+          🔒 Picked:
+          <strong id="picked">0</strong>
+        </div>
+
+      </div>
+
+      <div
+        id="numberGrid"
+        class="grid"
+      ></div>
+
+    </section>
+
+
+    <!-- PARTICIPANT PANEL -->
+
+    <aside class="picked-panel">
+
+      <h2>
+        🎁 Picked Participants
+      </h2>
+
+      <small>
+        Name & Selected Number
+      </small>
+
+      <div id="pickedList"></div>
+
+
+      <div class="admin-actions">
+
+        <button
+          id="resetGameButton"
+          class="reset-game"
+          type="button"
+        >
+          ↻ Reset Game
+        </button>
+
+      </div>
+
+    </aside>
+
+  </main>
+
+
+  <!-- NAME ENTRY POPUP -->
+
+  <div
+    id="nameOverlay"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="namePopupTitle"
+  >
+
+    <div class="modal">
+
+      <div class="icon">
+        🎅
+      </div>
+
+      <h2 id="namePopupTitle">
+        Ho Ho Ho!
+      </h2>
+
+      <p>
+        You selected number
+
+        <span
+          id="selectedText"
+          class="selected"
+        ></span>
+      </p>
+
+      <label
+        class="label"
+        for="nameInput"
+      >
+        Participant Name
+      </label>
+
+      <input
+        id="nameInput"
+        class="input"
+        type="text"
+        maxlength="40"
+        autocomplete="off"
+        placeholder="Enter your name"
+      >
+
+      <div
+        id="selectionError"
+        class="error"
+        aria-live="assertive"
+      ></div>
+
+      <div class="actions">
+
+        <button
+          id="cancelSelectionButton"
+          class="cancel"
+          type="button"
+        >
+          Cancel
+        </button>
+
+        <button
+          id="confirmSelectionButton"
+          class="confirm"
+          type="button"
+        >
+          Confirm Selection 🎁
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- SUCCESS POPUP -->
+
+  <div
+    id="successOverlay"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="successTitle"
+  >
+
+    <div class="modal">
+
+      <div class="icon">
+        🎄
+      </div>
+
+      <h2 id="successTitle">
+        Number Locked!
+      </h2>
+
+      <p>
+        <strong id="successName"></strong>,
+        your selected number is
+      </p>
+
+      <div
+        id="successNumber"
+        class="success-num"
+      ></div>
+
+      <p style="color:#777;font-size:13px">
+        Merry Christmas! 🎅
+      </p>
+
+      <button
+        id="continueButton"
+        class="continue"
+        type="button"
+      >
+        Continue
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ADMIN LOGIN POPUP -->
+
+  <div
+    id="adminLoginOverlay"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="adminLoginTitle"
+  >
+
+    <form
+      id="adminLoginForm"
+      class="modal"
+    >
+
+      <div class="icon">
+        🔐
+      </div>
+
+      <h2 id="adminLoginTitle">
+        Organizer Login
+      </h2>
+
+      <p>
+        Sign in to remove participants or reset the game.
+      </p>
+
+      <label
+        class="label"
+        for="adminEmail"
+      >
+        Organizer Email
+      </label>
+
+      <input
+        id="adminEmail"
+        class="input"
+        type="email"
+        autocomplete="username"
+        placeholder="Enter organizer email"
+        required
+      >
+
+      <label
+        class="label"
+        for="adminPassword"
+      >
+        Password
+      </label>
+
+      <input
+        id="adminPassword"
+        class="input"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Enter password"
+        required
+      >
+
+      <div
+        id="adminLoginError"
+        class="error"
+        aria-live="assertive"
+      ></div>
+
+      <div class="actions">
+
+        <button
+          id="cancelAdminLoginButton"
+          class="cancel"
+          type="button"
+        >
+          Cancel
+        </button>
+
+        <button
+          id="confirmAdminLoginButton"
+          class="confirm"
+          type="submit"
+        >
+          Login
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+
+  <!-- JAVASCRIPT -->
+
+  <script type="module">
+
+    import {
+      initializeApp
+    }
+    from
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+
+    import {
+      getDatabase,
+      ref,
+      onValue,
+      runTransaction,
+      update
+    }
+    from
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    }
+    from
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+    /* ===================================================
+       EXISTING FIREBASE CONFIGURATION
+    =================================================== */
+
+    const firebaseConfig = {
+      apiKey:
+        "AIzaSyAic77ljm0fBs4HHWaYrITsziMhD7LCK_g",
+
+      authDomain:
+        "memory-game-a04d2.firebaseapp.com",
+
+      databaseURL:
+        "https://memory-game-a04d2-default-rtdb.firebaseio.com/",
+
+      projectId:
+        "memory-game-a04d2",
+
+      storageBucket:
+        "memory-game-a04d2.firebasestorage.app",
+
+      messagingSenderId:
+        "448780154548",
+
+      appId:
+        "1:448780154548:web:dece58512596a7e9d109e1",
+
+      measurementId:
+        "G-WJLNLB5FTG"
+    };
+
+
+    /* ===================================================
+       SETTINGS
+    =================================================== */
+
+    const TOTAL = 32;
+
+    const GAME_ID =
+      "OFFICE_SECRET_SANTA_01";
+
+
+    /*
+      Replace this with the organizer UID found at:
+
+      Firebase Console
+      > Authentication
+      > Users
+      > User UID
+    */
+
+    const ADMIN_UID =
+      "Kd3Fn9dyWPa48WA9BZnkMaFPykS2";
+
+
+    /* ===================================================
+       INITIALIZE FIREBASE
+    =================================================== */
+
+    const app =
+      initializeApp(firebaseConfig);
+
+
+    const database =
+      getDatabase(app);
+
+
+    const auth =
+      getAuth(app);
+
+
+    const gameRef =
+      ref(
+        database,
+        `secretSantaGames/${GAME_ID}`
+      );
+
+
+    const connectionRef =
+      ref(
+        database,
+        ".info/connected"
+      );
+
+
+    const $ =
+      id =>
+        document.getElementById(id);
+
+
+    /* ===================================================
+       STATE
+    =================================================== */
+
+    let selections = {};
+
+    let selectedNumber = null;
+
+    let submitting = false;
+
+    let isAdmin = false;
+
+
+    /* ===================================================
+       NAME HELPERS
+    =================================================== */
+
+    function cleanName(value) {
+      return value
+        .trim()
+        .replace(/\s+/g," ");
+    }
+
+
+    function normalizeName(value) {
+      return cleanName(value)
+        .toLocaleLowerCase();
+    }
+
+
+    function validName(value) {
+      if (!value) {
+        return "Please enter your name.";
+      }
+
+      if (value.length < 2) {
+        return "Please enter at least 2 characters.";
+      }
+
+      if (value.length > 40) {
+        return "Name cannot exceed 40 characters.";
+      }
+
+      const validCharacters =
+        /^[\p{L}\p{M}\s.'-]+$/u;
+
+      if (!validCharacters.test(value)) {
+        return "Use only letters, spaces, periods, apostrophes, or hyphens.";
+      }
+
+      return "";
+    }
+
+
+    /* ===================================================
+       TOAST
+    =================================================== */
+
+    function showToast(
+      message,
+      isError = false
+    ) {
+      const element =
+        $("toast");
+
+      element.textContent =
+        message;
+
+      element.classList.toggle(
+        "error-toast",
+        isError
+      );
+
+      element.classList.add(
+        "show"
+      );
+
+      clearTimeout(
+        showToast.timer
+      );
+
+      showToast.timer =
+        setTimeout(
+          () => {
+            element.classList.remove(
+              "show"
+            );
+          },
+          5000
+        );
+    }
+
+
+    /* ===================================================
+       CONNECTION
+    =================================================== */
+
+    function setStatus(
+      online,
+      text
+    ) {
+      $("status")
+        .classList
+        .toggle(
+          "online",
+          online
+        );
+
+      $("status")
+        .classList
+        .toggle(
+          "offline",
+          !online
+        );
+
+      $("statusText")
+        .textContent =
+        text;
+    }
+
+
+    /* ===================================================
+       ADMIN STATE
+    =================================================== */
+
+    function updateAdminUI() {
+      document.body.classList.toggle(
+        "admin-mode",
+        isAdmin
+      );
+
+      render();
+    }
+
+
+    onAuthStateChanged(
+      auth,
+      user => {
+        isAdmin =
+          Boolean(
+            user &&
+            user.uid === ADMIN_UID
+          );
+
+        if (
+          user &&
+          !isAdmin
+        ) {
+          signOut(auth);
+
+          showToast(
+            "This account does not have organizer access.",
+            true
+          );
+        }
+
+        updateAdminUI();
+      }
+    );
+
+
+    /* ===================================================
+       RENDER
+    =================================================== */
+
+    function render() {
+      renderNumbers();
+      renderParticipants();
+      updateCounters();
+    }
+
+
+    function getValidEntries() {
+      return Object.entries(
+        selections
+      )
+      .filter(
+        ([number,item]) => {
+          const numericNumber =
+            Number(number);
+
+          return (
+            numericNumber >= 1 &&
+            numericNumber <= TOTAL &&
+            item &&
+            item.name
+          );
+        }
+      )
+      .sort(
+        (first,second) =>
+          Number(first[0]) -
+          Number(second[0])
+      );
+    }
+
+
+    function renderNumbers() {
+      const grid =
+        $("numberGrid");
+
+      grid.innerHTML =
+        "";
+
+      for (
+        let number = 1;
+        number <= TOTAL;
+        number++
+      ) {
+        const button =
+          document.createElement(
+            "button"
+          );
+
+        button.type =
+          "button";
+
+        button.className =
+          "number";
+
+        button.textContent =
+          String(number);
+
+        const selected =
+          Boolean(
+            selections[
+              String(number)
+            ]
+          );
+
+        button.disabled =
+          selected;
+
+        button.setAttribute(
+          "aria-label",
+          selected
+            ? `Number ${number} is already selected`
+            : `Select number ${number}`
+        );
+
+        button.addEventListener(
+          "click",
+          () => openSelectionDialog(
+            number
+          )
+        );
+
+        grid.appendChild(
+          button
+        );
+      }
+    }
+
+
+    function renderParticipants() {
+      const pickedList =
+        $("pickedList");
+
+      pickedList.innerHTML =
+        "";
+
+      const entries =
+        getValidEntries();
+
+      if (
+        entries.length === 0
+      ) {
+        pickedList.innerHTML = `
+          <div class="empty">
+            🎄 No participants yet
+          </div>
+        `;
+
+        return;
+      }
+
+      for (
+        const [number,item]
+        of entries
+      ) {
+        const row =
+          document.createElement(
+            "div"
+          );
+
+        row.className =
+          "picked-item";
+
+
+        const name =
+          document.createElement(
+            "div"
+          );
+
+        name.className =
+          "person";
+
+        name.textContent =
+          item.name;
+
+        name.title =
+          item.name;
+
+
+        const badge =
+          document.createElement(
+            "div"
+          );
+
+        badge.className =
+          "badge";
+
+        badge.textContent =
+          number;
+
+
+        const removeButton =
+          document.createElement(
+            "button"
+          );
+
+        removeButton.type =
+          "button";
+
+        removeButton.className =
+          "remove-person";
+
+        removeButton.textContent =
+          "✕";
+
+        removeButton.title =
+          `Remove ${item.name}`;
+
+        removeButton.setAttribute(
+          "aria-label",
+          `Remove ${item.name} and release number ${number}`
+        );
+
+        removeButton.addEventListener(
+          "click",
+          () => {
+            removeParticipant(
+              number,
+              item
+            );
+          }
+        );
+
+
+        const rightSide =
+          document.createElement(
+            "div"
+          );
+
+        rightSide.className =
+          "participant-actions";
+
+        rightSide.append(
+          badge,
+          removeButton
+        );
+
+        row.append(
+          name,
+          rightSide
+        );
+
+        pickedList.appendChild(
+          row
+        );
+      }
+    }
+
+
+    function updateCounters() {
+      const selectedCount =
+        getValidEntries().length;
+
+      $("picked")
+        .textContent =
+        String(selectedCount);
+
+      $("available")
+        .textContent =
+        String(
+          TOTAL -
+          selectedCount
+        );
+
+      $("resetGameButton")
+        .disabled =
+        selectedCount === 0;
+    }
+
+
+    /* ===================================================
+       SELECTION MODAL
+    =================================================== */
+
+    function openSelectionDialog(number) {
+      if (
+        selections[
+          String(number)
+        ]
+      ) {
+        showToast(
+          `Number ${number} is already selected.`,
+          true
+        );
+
+        return;
+      }
+
+      selectedNumber =
+        number;
+
+      $("selectedText")
+        .textContent =
+        String(number);
+
+      $("nameInput")
+        .value =
+        "";
+
+      $("selectionError")
+        .textContent =
+        "";
+
+      $("nameOverlay")
+        .classList
+        .add(
+          "show"
+        );
+
+      setTimeout(
+        () => {
+          $("nameInput")
+            .focus();
+        },
+        80
+      );
+    }
+
+
+    function closeSelectionDialog() {
+      if (submitting) {
+        return;
+      }
+
+      $("nameOverlay")
+        .classList
+        .remove(
+          "show"
+        );
+
+      selectedNumber =
+        null;
+
+      $("selectionError")
+        .textContent =
+        "";
+    }
+
+
+    function setSubmitting(value) {
+      submitting =
+        value;
+
+      $("nameInput")
+        .disabled =
+        value;
+
+      $("confirmSelectionButton")
+        .disabled =
+        value;
+
+      $("cancelSelectionButton")
+        .disabled =
+        value;
+
+      $("confirmSelectionButton")
+        .textContent =
+        value
+          ? "Saving Selection..."
+          : "Confirm Selection 🎁";
+    }
+
+
+    /* ===================================================
+       CONFIRM SELECTION
+    =================================================== */
+
+    async function confirmSelection() {
+      if (submitting) {
+        return;
+      }
+
+      const number =
+        String(
+          selectedNumber ?? ""
+        );
+
+      const name =
+        cleanName(
+          $("nameInput").value
+        );
+
+      const validation =
+        validName(name);
+
+      if (
+        !/^([1-9]|[12][0-9]|3[0-2])$/
+          .test(number)
+      ) {
+        $("selectionError")
+          .textContent =
+          "Please select a valid number.";
+
+        return;
+      }
+
+      if (validation) {
+        $("selectionError")
+          .textContent =
+          validation;
+
+        $("nameInput")
+          .focus();
+
+        return;
+      }
+
+      const normalized =
+        normalizeName(name);
+
+      let failure =
+        "";
+
+      setSubmitting(true);
+
+      $("selectionError")
+        .textContent =
+        "";
+
+      try {
+        const result =
+          await runTransaction(
+            gameRef,
+
+            currentGame => {
+              const game =
+                currentGame &&
+                typeof currentGame === "object"
+                  ? currentGame
+                  : {};
+
+              const currentSelections =
+                game.selections &&
+                typeof game.selections === "object"
+                  ? game.selections
+                  : {};
+
+              const currentNames =
+                game.names &&
+                typeof game.names === "object"
+                  ? game.names
+                  : {};
+
+              if (
+                currentSelections[
+                  number
+                ]
+              ) {
+                failure =
+                  "number";
+
+                return;
+              }
+
+              if (
+                currentNames[
+                  normalized
+                ]
+              ) {
+                failure =
+                  "name";
+
+                return;
+              }
+
+              const timestamp =
+                Date.now();
+
+              return {
+                ...game,
+
+                selections: {
+                  ...currentSelections,
+
+                  [number]: {
+                    name,
+                    normalizedName:
+                      normalized,
+                    selectedAt:
+                      timestamp
+                  }
+                },
+
+                names: {
+                  ...currentNames,
+
+                  [normalized]: {
+                    number,
+                    name,
+                    selectedAt:
+                      timestamp
+                  }
+                }
+              };
+            },
+
+            {
+              applyLocally:
+                false
+            }
+          );
+
+
+        if (
+          !result.committed
+        ) {
+          if (
+            failure === "name"
+          ) {
+            $("selectionError")
+              .textContent =
+              "This name has already selected a number.";
+          }
+
+          else if (
+            failure === "number"
+          ) {
+            $("selectionError")
+              .textContent =
+              `Number ${number} was just selected. Please choose another number.`;
+          }
+
+          else {
+            $("selectionError")
+              .textContent =
+              "Selection could not be completed. Please try again.";
+          }
+
+          setSubmitting(false);
+
+          return;
+        }
+
+
+        $("nameOverlay")
+          .classList
+          .remove(
+            "show"
+          );
+
+        setSubmitting(false);
+
+        selectedNumber =
+          null;
+
+        $("successName")
+          .textContent =
+          name;
+
+        $("successNumber")
+          .textContent =
+          number;
+
+        $("successOverlay")
+          .classList
+          .add(
+            "show"
+          );
+      }
+
+      catch (error) {
+        console.error(
+          "Firebase transaction error:",
+          error
+        );
+
+        const errorCode =
+          String(
+            error?.code || ""
+          )
+          .toLowerCase();
+
+        $("selectionError")
+          .textContent =
+          errorCode.includes(
+            "permission"
+          )
+            ? "Firebase denied the selection. Check the Realtime Database rules."
+            : "Unable to save the selection. Check your connection and try again.";
+
+        setSubmitting(false);
+      }
+    }
+
+
+    /* ===================================================
+       ADMIN LOGIN
+    =================================================== */
+
+    function openAdminLogin() {
+      $("adminEmail")
+        .value =
+        "";
+
+      $("adminPassword")
+        .value =
+        "";
+
+      $("adminLoginError")
+        .textContent =
+        "";
+
+      $("adminLoginOverlay")
+        .classList
+        .add(
+          "show"
+        );
+
+      setTimeout(
+        () => {
+          $("adminEmail")
+            .focus();
+        },
+        80
+      );
+    }
+
+
+    function closeAdminLogin() {
+      $("adminLoginOverlay")
+        .classList
+        .remove(
+          "show"
+        );
+
+      $("adminLoginError")
+        .textContent =
+        "";
+    }
+
+
+    async function loginAdmin(event) {
+      event.preventDefault();
+
+      const email =
+        $("adminEmail")
+          .value
+          .trim();
+
+      const password =
+        $("adminPassword")
+          .value;
+
+      if (
+        !email ||
+        !password
+      ) {
+        $("adminLoginError")
+          .textContent =
+          "Enter the organizer email and password.";
+
+        return;
+      }
+
+      $("confirmAdminLoginButton")
+        .disabled =
+        true;
+
+      $("confirmAdminLoginButton")
+        .textContent =
+        "Signing In...";
+
+      $("adminLoginError")
+        .textContent =
+        "";
+
+      try {
+        const credential =
+          await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+
+        if (
+          credential.user.uid !==
+          ADMIN_UID
+        ) {
+          await signOut(auth);
+
+          throw new Error(
+            "not-admin"
+          );
+        }
+
+        closeAdminLogin();
+
+        showToast(
+          "Admin mode enabled."
+        );
+      }
+
+      catch (error) {
+        console.error(
+          "Admin login error:",
+          error
+        );
+
+        $("adminLoginError")
+          .textContent =
+          error.message ===
+            "not-admin"
+            ? "This account does not have organizer access."
+            : "Incorrect organizer email or password.";
+      }
+
+      finally {
+        $("confirmAdminLoginButton")
+          .disabled =
+          false;
+
+        $("confirmAdminLoginButton")
+          .textContent =
+          "Login";
+      }
+    }
+
+
+    async function logoutAdmin() {
+      try {
+        await signOut(auth);
+
+        showToast(
+          "Admin mode disabled."
+        );
+      }
+
+      catch (error) {
+        console.error(
+          "Admin logout error:",
+          error
+        );
+
+        showToast(
+          "Unable to log out.",
+          true
+        );
+      }
+    }
+
+
+    /* ===================================================
+       REMOVE PARTICIPANT
+    =================================================== */
+
+    async function removeParticipant(
+      number,
+      participant
+    ) {
+      if (
+        !isAdmin ||
+        auth.currentUser?.uid !== ADMIN_UID
+      ) {
+        showToast(
+          "Admin access is required.",
+          true
+        );
+
+        return;
+      }
+
+      const confirmed =
+        confirm(
+          `Remove ${participant.name}?\n\nNumber ${number} will become available again.`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const normalized =
+        participant.normalizedName ||
+        normalizeName(
+          participant.name
+        );
+
+      try {
+        const updates = {};
+
+        updates[
+          `secretSantaGames/${GAME_ID}/selections/${number}`
+        ] = null;
+
+        updates[
+          `secretSantaGames/${GAME_ID}/names/${normalized}`
+        ] = null;
+
+        await update(
+          ref(database),
+          updates
+        );
+
+        showToast(
+          `${participant.name} removed. Number ${number} is available again.`
+        );
+      }
+
+      catch (error) {
+        console.error(
+          "Remove participant error:",
+          error
+        );
+
+        showToast(
+          "Unable to remove the participant. Check admin permissions.",
+          true
+        );
+      }
+    }
+
+
+    /* ===================================================
+       RESET GAME
+    =================================================== */
+
+    async function resetGame() {
+      if (
+        !isAdmin ||
+        auth.currentUser?.uid !== ADMIN_UID
+      ) {
+        showToast(
+          "Admin access is required.",
+          true
+        );
+
+        return;
+      }
+
+      const entries =
+        getValidEntries();
+
+      if (
+        entries.length === 0
+      ) {
+        showToast(
+          "The game is already empty."
+        );
+
+        return;
+      }
+
+      const confirmed =
+        confirm(
+          `Reset the Secret Santa game?\n\nThis will remove all ${entries.length} participant selection${entries.length === 1 ? "" : "s"} and make all 32 numbers available again.`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const updates = {};
+
+      for (
+        const [number,item]
+        of entries
+      ) {
+        const normalized =
+          item.normalizedName ||
+          normalizeName(
+            item.name
+          );
+
+        updates[
+          `secretSantaGames/${GAME_ID}/selections/${number}`
+        ] = null;
+
+        updates[
+          `secretSantaGames/${GAME_ID}/names/${normalized}`
+        ] = null;
+      }
+
+      try {
+        $("resetGameButton")
+          .disabled =
+          true;
+
+        $("resetGameButton")
+          .textContent =
+          "Resetting...";
+
+        await update(
+          ref(database),
+          updates
+        );
+
+        showToast(
+          "Game reset successfully. All 32 numbers are available."
+        );
+      }
+
+      catch (error) {
+        console.error(
+          "Reset game error:",
+          error
+        );
+
+        showToast(
+          "Unable to reset the game. Check admin permissions.",
+          true
+        );
+      }
+
+      finally {
+        $("resetGameButton")
+          .disabled =
+          false;
+
+        $("resetGameButton")
+          .textContent =
+          "↻ Reset Game";
+      }
+    }
+
+
+    /* ===================================================
+       DATABASE LISTENERS
+    =================================================== */
+
+    onValue(
+      connectionRef,
+
+      snapshot => {
+        const online =
+          snapshot.val() === true;
+
+        setStatus(
+          online,
+          online
+            ? "Connected"
+            : "Reconnecting..."
+        );
+      }
+    );
+
+
+    onValue(
+      gameRef,
+
+      snapshot => {
+        const game =
+          snapshot.val();
+
+        selections =
+          game?.selections ||
+          {};
+
+        render();
+      },
+
+      error => {
+        console.error(
+          "Firebase read error:",
+          error
+        );
+
+        setStatus(
+          false,
+          "Database access denied"
+        );
+
+        showToast(
+          "Unable to read Secret Santa data.",
+          true
+        );
+      }
+    );
+
+
+    /* ===================================================
+       EVENTS
+    =================================================== */
+
+    $("confirmSelectionButton")
+      .addEventListener(
+        "click",
+        confirmSelection
+      );
+
+
+    $("cancelSelectionButton")
+      .addEventListener(
+        "click",
+        closeSelectionDialog
+      );
+
+
+    $("continueButton")
+      .addEventListener(
+        "click",
+        () => {
+          $("successOverlay")
+            .classList
+            .remove(
+              "show"
+            );
+        }
+      );
+
+
+    $("adminLoginButton")
+      .addEventListener(
+        "click",
+        openAdminLogin
+      );
+
+
+    $("cancelAdminLoginButton")
+      .addEventListener(
+        "click",
+        closeAdminLogin
+      );
+
+
+    $("adminLoginForm")
+      .addEventListener(
+        "submit",
+        loginAdmin
+      );
+
+
+    $("adminLogoutButton")
+      .addEventListener(
+        "click",
+        logoutAdmin
+      );
+
+
+    $("resetGameButton")
+      .addEventListener(
+        "click",
+        resetGame
+      );
+
+
+    $("nameInput")
+      .addEventListener(
+        "keydown",
+        event => {
+          if (
+            event.key === "Enter"
+          ) {
+            event.preventDefault();
+
+            confirmSelection();
+          }
+        }
+      );
+
+
+    $("nameOverlay")
+      .addEventListener(
+        "click",
+        event => {
+          if (
+            event.target ===
+            $("nameOverlay")
+          ) {
+            closeSelectionDialog();
+          }
+        }
+      );
+
+
+    $("successOverlay")
+      .addEventListener(
+        "click",
+        event => {
+          if (
+            event.target ===
+            $("successOverlay")
+          ) {
+            $("successOverlay")
+              .classList
+              .remove(
+                "show"
+              );
+          }
+        }
+      );
+
+
+    $("adminLoginOverlay")
+      .addEventListener(
+        "click",
+        event => {
+          if (
+            event.target ===
+            $("adminLoginOverlay")
+          ) {
+            closeAdminLogin();
+          }
+        }
+      );
+
+
+    document.addEventListener(
+      "keydown",
+      event => {
+        if (
+          event.key !== "Escape"
+        ) {
+          return;
+        }
+
+        closeSelectionDialog();
+        closeAdminLogin();
+
+        $("successOverlay")
+          .classList
+          .remove(
+            "show"
+          );
+      }
+    );
+
+
+    render();
+
+  </script>
+
+</body>
+</html>
